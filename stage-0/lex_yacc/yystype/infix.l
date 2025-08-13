@@ -1,21 +1,35 @@
 %{
-#include<stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "y.tab.h"
-%}
-%%
 
-[a-z]       { yylval.c = yytext[0]; return ID; }
-[+]      { yylval.c = yytext[0]; return ADD; }
-[-]      { yylval.c = yytext[0]; return SUB; }
-[*]      { yylval.c = yytext[0]; return MUL; }
-[/]      { yylval.c = yytext[0]; return DIV; }
+// Forward decl so we don't get "implicit declaration" warning
+void yyerror(const char *s);
 
-[ \t]       ;  // Ignore spaces and tabs
-\n          { return '\n'; }
-.           ;  // Ignore other characters
-
-%%
-
-yywrap(){
-    return 1;
+static char *xstrdup(const char *s) {
+    size_t n = strlen(s) + 1;
+    char *p = (char *)malloc(n);
+    if (p) memcpy(p, s, n);
+    return p;
 }
+%}
+
+%%
+
+[a-zA-Z_][a-zA-Z0-9_]*    { yylval.str = xstrdup(yytext); return ID; }
+
+"+"                        { return PLUS; }
+"-"                        { return MINUS; }
+"*"                        { return MUL; }
+"/"                        { return DIV; }
+"("                        { return '('; }
+")"                        { return ')'; }
+
+[ \t\r]+                   { /* skip whitespace */ }
+\n                         { return END; }
+
+.                          { yyerror("unknown character"); }
+
+%%
+
+int yywrap(void) { return 1; }

@@ -5,7 +5,7 @@
 %%
 
 // Match multi-line C-style comments
-
+view
 "/*"([^*]*\*+)*([^*/][^*]*\*+)*"/"    {
     printf("Multi-line comment: %s\n", yytext);
 }
