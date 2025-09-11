@@ -26,7 +26,7 @@
 "/"         { return DIV; }
 [ \t\n]     { /* ignore whitespace */ }
 
-.           { printf("Unknown symbol: %s\n", yytext); }
+.           {}
 
 %%
 

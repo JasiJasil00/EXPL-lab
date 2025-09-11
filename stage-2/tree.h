@@ -24,6 +24,6 @@ struct tnode {
 };
 
 struct tnode* createTree(int val, int type, char* c, int nodetype, struct tnode *l, struct tnode *r);
-void printTree(struct tnode *t);
-
+int codeGen(struct tnode *t,FILE *target_file);
+void execute(struct tnode * t);
 #endif

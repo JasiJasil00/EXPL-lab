@@ -2,39 +2,161 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tree.h"
+int reg = 0;
+int getreg()
+{
+    return reg++;
+}
+void freereg()
+{
+    reg--;
+}
+int codeGen(struct tnode *t, FILE *target_file)
+{   int i ;
+    int j ;
+    int p;
+    int q;
+    if (t == NULL)
+        return -1;
 
-struct tnode* createTree(int val, int type, char* c, int nodetype, struct tnode *l, struct tnode *r) {
-    struct tnode *temp = (struct tnode*)malloc(sizeof(struct tnode));
-    temp->val = val;
-    temp->type = type;
-    temp->nodetype = nodetype;
-    temp->left = l;
-    temp->right = r;
-
-    if (c != NULL) {
-        temp->varname = (char*)malloc(strlen(c) + 1);
-        strcpy(temp->varname, c);
-    } else {
-        temp->varname = NULL;
-    }
-    return temp;
+    switch (t->nodetype)
+    {
+    case NODE_NUM:
+         i = getreg();
+        fprintf(target_file, "MOV R%d, %d\n", i, t->val);
+        return i;
+        break;
+    case NODE_ID:
+         i = getreg();
+         if (t->varname == NULL) {
+    fprintf(stderr, "Error: varname is NULL for nodetype %d\n", t->nodetype);
+    exit(1);
 }
 
-
-
-void printTree(struct tnode *t) {
-    if (t == NULL) return;
-
-    switch (t->nodetype) {
-        case NODE_NUM:    printf("%d ", t->val); break;
-        case NODE_ID:     printf("%s ", t->varname); break;
-        case NODE_PLUS:   printf("PLUS ");   printTree(t->left); printTree(t->right); break;
-        case NODE_MINUS:  printf("MINUS ");  printTree(t->left); printTree(t->right); break;
-        case NODE_MUL:    printf("MUL ");    printTree(t->left); printTree(t->right); break;
-        case NODE_DIV:    printf("DIV ");    printTree(t->left); printTree(t->right); break;
-        case NODE_READ:   printf("READ ");   printTree(t->left); break;
-        case NODE_WRITE:  printf("WRITE ");  printTree(t->left); break;
-        case NODE_ASSIGN:  printf("ASSIGN "); printTree(t->left); printTree(t->right); break;
-        case NODE_CONNECTOR: printf("CONNECTOR "); printTree(t->left); printTree(t->right); break;
+        fprintf(target_file, "MOV R%d, [%d]\n", i, 4096 + t->varname[0] - 'a');
+        return i;
+        break;
+    case NODE_PLUS:
+        p = codeGen(t->left, target_file);
+        q = codeGen(t->right, target_file);
+        fprintf(target_file, "ADD R%d,R%d\n", p, q);
+        freereg();
+        return p;
+        break;
+    case NODE_MINUS:
+        p = codeGen(t->left, target_file);
+         q = codeGen(t->right, target_file);
+        fprintf(target_file, "SUB R%d,R%d\n", p, q);
+        freereg();
+        return p;
+        break;
+    case NODE_MUL:
+        p = codeGen(t->left, target_file);
+        q = codeGen(t->right, target_file);
+        fprintf(target_file, "MUL R%d,R%d\n", p, q);
+        freereg();
+        return p;
+        break;
+    case NODE_DIV:
+        p = codeGen(t->left, target_file);
+        q = codeGen(t->right, target_file);
+        fprintf(target_file, "DIV R%d,R%d\n", p, q);
+        freereg();
+        return p;
+        break;
+    case NODE_READ:
+    if (t->left->varname == NULL) {
+        fprintf(stderr, "Error: varname is NULL in NODE_READ\n");
+        exit(1);
     }
+        i = getreg();
+        j = getreg();
+        fprintf(target_file, "MOV R%d,%d\n", j, 4096 + t->left->varname[0] - 'a');
+        fprintf(target_file, "MOV R%d, \"Read\"\n",i);
+        fprintf(target_file, "PUSH R%d\n",i);
+        fprintf(target_file, "MOV R%d, -1\n",i);
+        fprintf(target_file, "PUSH R%d\n",i);
+        fprintf(target_file, "MOV R%d, R%d\n",i,j);
+        fprintf(target_file, "PUSH R%d\n",i);
+        fprintf(target_file, "PUSH R%d\n",i);
+        fprintf(target_file, "PUSH R%d\n",i);
+        fprintf(target_file, "CALL 0\n");
+        fprintf(target_file, "POP R%d\n",i);
+        fprintf(target_file, "POP R%d\n",i);
+        fprintf(target_file, "POP R%d\n",i);
+        fprintf(target_file, "POP R%d\n",i);
+        fprintf(target_file, "POP R%d\n",i);
+        freereg();
+        freereg();
+        break;
+    case NODE_WRITE:
+        i = getreg();
+        j = codeGen(t->left,target_file);
+        fprintf(target_file, "MOV R%d, \"Write\"\n", i);
+        fprintf(target_file, "PUSH R%d\n", i);
+        fprintf(target_file, "MOV R%d, -2\n", i);
+        fprintf(target_file, "PUSH R%d\n", i);
+        fprintf(target_file, "PUSH R%d \n", j);
+        fprintf(target_file, "PUSH R%d\n", i);
+        fprintf(target_file, "PUSH R%d\n", i);
+        fprintf(target_file, "CALL 0\n");
+        fprintf(target_file, "POP R%d\n", i);
+        fprintf(target_file, "POP R%d\n", i);
+        fprintf(target_file, "POP R%d\n", i);
+        fprintf(target_file, "POP R%d\n", i);
+        fprintf(target_file, "POP R%d\n",i);
+        freereg();
+        freereg();
+        return -1;
+        break;
+    case NODE_ASSIGN:
+        i = codeGen(t->right,target_file);
+        fprintf(target_file,"MOV [%d], R%d\n", 4096 + t->left->varname[0] - 'a',i);
+        break;
+    case NODE_CONNECTOR:
+        codeGen(t->left,target_file);
+        codeGen(t->right,target_file);
+        break;
+    }
+    return -1;
+}
+void execute(struct tnode *t)
+{
+
+    FILE *target_file = fopen("target_file.xsm", "w"); // task1
+    if (!target_file)
+    {
+        perror("fopen");
+        return ;
+    }
+    fprintf(target_file, "%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
+            0,
+            2056,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0);
+    for (int i = 0; i <= 26; i++)
+    {
+        fprintf(target_file, "MOV [%d], 0\n", 4096 + i);
+    }
+    fprintf(target_file, "MOV SP, 4123\n");
+    int result = codeGen(t, target_file); // task2
+    fprintf(target_file, "MOV R5, \"Exit\"\n");
+    fprintf(target_file, "PUSH R5\n");
+    fprintf(target_file, "PUSH R1\n");
+    fprintf(target_file, "PUSH R4\n");
+    fprintf(target_file, "PUSH R0\n");
+    fprintf(target_file, "PUSH R0\n");
+    fprintf(target_file, "CALL 0\n");
+    fprintf(target_file, "POP R0\n");
+    fprintf(target_file, "POP R1\n");
+    fprintf(target_file, "POP R1\n");
+    fprintf(target_file, "POP R1\n");
+    fprintf(target_file, "POP R1\n");
+
+    fclose(target_file);
+    return ;
 }

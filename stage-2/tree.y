@@ -2,6 +2,7 @@
     #include <stdio.h>
     #include <stdlib.h>
     #include "tree.h"
+    #include "tree.c"
     #include "codegen.c"
 
     int yyerror(char const *s);
@@ -21,7 +22,7 @@
 
 %%
 
-Program : BEGINP StmtList ENDP SEMICOLON { $$ = $2; printTree($$); exit(0);}
+Program : BEGINP StmtList ENDP SEMICOLON { $$ = $2; execute($$); exit(0);}
         ;
 
 Stmt    : InputStmt
