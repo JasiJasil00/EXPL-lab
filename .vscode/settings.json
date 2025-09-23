@@ -1,9 +1,0 @@
-{
-    "powerquery.client.additionalSymbolsDirectories": [
-        "d:/nitc curriculum/sem5/compiler design lab/.vscode/excel-pq-symbols"
-    ],
-    "files.associations": {
-        "stdio.h": "c",
-        "stdlib.h": "c"
-    }
-}
