@@ -76,7 +76,12 @@
 #include "file.h"
 #include "node.h"
 
-#line 80 "y.tab.c"
+
+int label_add();
+int yyerror();
+int yylex();
+
+#line 85 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -211,11 +216,11 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 10 "splparser.y"
+#line 15 "splparser.y"
 
     struct tree *n;
 
-#line 219 "y.tab.c"
+#line 224 "y.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -685,12 +690,12 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    23,    23,    30,    35,    36,    39,    42,    50,    53,
-      58,    70,    82,    87,    93,    99,   103,   106,   109,   112,
-     115,   118,   126,   134,   137,   143,   146,   149,   157,   160,
-     163,   166,   174,   185,   196,   203,   206,   209,   212,   215,
-     220,   223,   226,   229,   232,   235,   240,   245,   250,   257,
-     260
+       0,    28,    28,    35,    40,    41,    44,    47,    55,    58,
+      63,    75,    87,    92,    98,   104,   108,   111,   114,   117,
+     120,   123,   131,   139,   142,   148,   151,   154,   162,   165,
+     168,   171,   179,   190,   201,   208,   211,   214,   217,   220,
+     225,   228,   231,   234,   237,   240,   245,   250,   255,   262,
+     265
 };
 #endif
 
@@ -1364,60 +1369,60 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* body: definelistpad stmtlist  */
-#line 23 "splparser.y"
+#line 28 "splparser.y"
                                 {
                                     codegen((yyvsp[0].n));
                                     out_linecount++;
                                     fprintf(fp,"HALT");
                                 }
-#line 1374 "y.tab.c"
+#line 1379 "y.tab.c"
     break;
 
   case 3: /* definelistpad: definelist  */
-#line 30 "splparser.y"
+#line 35 "splparser.y"
                                 {
                                     add_predefined_constants();
                                 }
-#line 1382 "y.tab.c"
+#line 1387 "y.tab.c"
     break;
 
   case 6: /* definestmt: DEFINE ID NUM ';'  */
-#line 39 "splparser.y"
+#line 44 "splparser.y"
                                                 {
                                                     insert_constant((yyvsp[-2].n)->name,(yyvsp[-1].n)->value);
                                                 }
-#line 1390 "y.tab.c"
+#line 1395 "y.tab.c"
     break;
 
   case 7: /* definestmt: DEFINE ID ARITHOP1 NUM ';'  */
-#line 42 "splparser.y"
+#line 47 "splparser.y"
                                                 {
                                                     if(node_getType((yyvsp[-2].n))==NODE_SUB)
                                                         insert_constant((yyvsp[-3].n)->name,-1*(yyvsp[-1].n)->value);
                                                     else
                                                         insert_constant((yyvsp[-3].n)->name,(yyvsp[-1].n)->value);
                                                 }
-#line 1401 "y.tab.c"
+#line 1406 "y.tab.c"
     break;
 
   case 8: /* stmtlist: stmtlist stmt  */
-#line 50 "splparser.y"
+#line 55 "splparser.y"
                                                 {
                                                     (yyval.n)=create_nontermNode(NODE_STMTLIST,(yyvsp[-1].n),(yyvsp[0].n));
                                                 }
-#line 1409 "y.tab.c"
+#line 1414 "y.tab.c"
     break;
 
   case 9: /* stmtlist: stmt  */
-#line 53 "splparser.y"
+#line 58 "splparser.y"
                                                 {
                                                     (yyval.n)=(yyvsp[0].n);
                                                 }
-#line 1417 "y.tab.c"
+#line 1422 "y.tab.c"
     break;
 
   case 10: /* stmt: expr ASSIGNOP expr ';'  */
-#line 58 "splparser.y"
+#line 63 "splparser.y"
                                                 {
                                                     if(node_getType((yyvsp[-3].n))==NODE_REG || node_getType((yyvsp[-3].n))==NODE_ADDR_EXPR)
                                                     {
@@ -1430,11 +1435,11 @@ yyreduce:
                                                         exit(0);
                                                     }
                                                 }
-#line 1434 "y.tab.c"
+#line 1439 "y.tab.c"
     break;
 
   case 11: /* stmt: expr ASSIGNOP PORT ';'  */
-#line 70 "splparser.y"
+#line 75 "splparser.y"
                                                 {
                                                     if(node_getType((yyvsp[-3].n))==NODE_REG || node_getType((yyvsp[-3].n))==NODE_ADDR_EXPR)
                                                     {
@@ -1447,91 +1452,91 @@ yyreduce:
                                                         exit(0);
                                                     }
                                                 }
-#line 1451 "y.tab.c"
+#line 1456 "y.tab.c"
     break;
 
   case 12: /* stmt: ifpad expr THEN stmtlist ENDIF ';'  */
-#line 82 "splparser.y"
+#line 87 "splparser.y"
                                                         {                                
                                                             (yyval.n)=create_tree((yyvsp[-5].n),(yyvsp[-4].n),(yyvsp[-2].n),NULL);
                                                             pop_alias();
                                                             depth--;
                                                         }
-#line 1461 "y.tab.c"
+#line 1466 "y.tab.c"
     break;
 
   case 13: /* stmt: ifpad expr THEN stmtlist elsepad stmtlist ENDIF ';'  */
-#line 88 "splparser.y"
+#line 93 "splparser.y"
                                                         {    
                                                             (yyval.n)=create_tree((yyvsp[-7].n),(yyvsp[-6].n),(yyvsp[-4].n),(yyvsp[-2].n));
                                                             pop_alias();
                                                             depth--;
                                                         }
-#line 1471 "y.tab.c"
+#line 1476 "y.tab.c"
     break;
 
   case 14: /* stmt: whilepad expr DO stmtlist ENDWHILE ';'  */
-#line 93 "splparser.y"
+#line 98 "splparser.y"
                                                         {
                                                             (yyval.n)=create_tree((yyvsp[-5].n),(yyvsp[-4].n),(yyvsp[-2].n),NULL);
                                                             pop_alias();
                                                             depth--;
                                                             flag_break--;
                                                         }
-#line 1482 "y.tab.c"
+#line 1487 "y.tab.c"
     break;
 
   case 15: /* stmt: ALIAS ID REG ';'  */
-#line 99 "splparser.y"
+#line 104 "splparser.y"
                                                         {    
                                                             push_alias((yyvsp[-2].n)->name,(yyvsp[-1].n)->value);
                                                             (yyval.n)=NULL;
                                                         }
-#line 1491 "y.tab.c"
+#line 1496 "y.tab.c"
     break;
 
   case 16: /* stmt: LOAD '(' expr ',' expr ')' ';'  */
-#line 103 "splparser.y"
+#line 108 "splparser.y"
                                                         {
                                                             (yyval.n)=create_tree((yyvsp[-6].n),(yyvsp[-4].n),(yyvsp[-2].n),NULL);
                                                         }
-#line 1499 "y.tab.c"
+#line 1504 "y.tab.c"
     break;
 
   case 17: /* stmt: STORE '(' expr ',' expr ')' ';'  */
-#line 106 "splparser.y"
+#line 111 "splparser.y"
                                                         {
                                                             (yyval.n)=create_tree((yyvsp[-6].n),(yyvsp[-4].n),(yyvsp[-2].n),NULL);
                                                         }
-#line 1507 "y.tab.c"
+#line 1512 "y.tab.c"
     break;
 
   case 18: /* stmt: LOADI '(' expr ',' expr ')' ';'  */
-#line 109 "splparser.y"
+#line 114 "splparser.y"
                                                         {
                                                             (yyval.n)=create_tree((yyvsp[-6].n),(yyvsp[-4].n),(yyvsp[-2].n),NULL);
                                                         }
-#line 1515 "y.tab.c"
+#line 1520 "y.tab.c"
     break;
 
   case 19: /* stmt: RETURN ';'  */
-#line 112 "splparser.y"
+#line 117 "splparser.y"
                                                        {
                                                             (yyval.n)=(yyvsp[-1].n);
                                                         }
-#line 1523 "y.tab.c"
+#line 1528 "y.tab.c"
     break;
 
   case 20: /* stmt: IRETURN ';'  */
-#line 115 "splparser.y"
+#line 120 "splparser.y"
                                                         {
                                                             (yyval.n)=(yyvsp[-1].n);
                                                         }
-#line 1531 "y.tab.c"
+#line 1536 "y.tab.c"
     break;
 
   case 21: /* stmt: BREAK ';'  */
-#line 118 "splparser.y"
+#line 123 "splparser.y"
                                                         {
                                                             if(flag_break==0)
                                                             {
@@ -1540,11 +1545,11 @@ yyreduce:
                                                             }
                                                             (yyval.n)=(yyvsp[-1].n);
                                                         }
-#line 1544 "y.tab.c"
+#line 1549 "y.tab.c"
     break;
 
   case 22: /* stmt: CONTINUE ';'  */
-#line 126 "splparser.y"
+#line 131 "splparser.y"
                                             {
                                                 if(flag_break==0)
                                                 {
@@ -1553,46 +1558,46 @@ yyreduce:
                                                 }
                                                 (yyval.n)=(yyvsp[-1].n);
                                             }
-#line 1557 "y.tab.c"
+#line 1562 "y.tab.c"
     break;
 
   case 23: /* stmt: HALT ';'  */
-#line 134 "splparser.y"
+#line 139 "splparser.y"
                                             {    
                                                 (yyval.n)=(yyvsp[-1].n);
                                             }
-#line 1565 "y.tab.c"
+#line 1570 "y.tab.c"
     break;
 
   case 24: /* stmt: INLINE STRING ';'  */
-#line 137 "splparser.y"
+#line 142 "splparser.y"
                                             {
                                                 (yyvsp[-1].n)->name++;
                                                 int temp=strlen((yyvsp[-1].n)->name);
                                                 (yyvsp[-1].n)->name[temp-1]='\0';
                                                 (yyval.n)=create_tree((yyvsp[-2].n),(yyvsp[-1].n),NULL,NULL);
                                             }
-#line 1576 "y.tab.c"
+#line 1581 "y.tab.c"
     break;
 
   case 25: /* stmt: CHKPT ';'  */
-#line 143 "splparser.y"
+#line 148 "splparser.y"
                                             {    
                                                 (yyval.n)=(yyvsp[-1].n);
                                             }
-#line 1584 "y.tab.c"
+#line 1589 "y.tab.c"
     break;
 
   case 26: /* stmt: READ ';'  */
-#line 146 "splparser.y"
+#line 151 "splparser.y"
                                             {
                                                 (yyval.n)=(yyvsp[-1].n);
                                             }
-#line 1592 "y.tab.c"
+#line 1597 "y.tab.c"
     break;
 
   case 27: /* stmt: READI ids ';'  */
-#line 149 "splparser.y"
+#line 154 "splparser.y"
                                             {    
                                                 if(node_getType((yyvsp[-1].n))!=NODE_REG||!isAllowedRegister((yyvsp[-1].n)->value))
                                                 {
@@ -1601,35 +1606,35 @@ yyreduce:
                                                 }                            
                                                 (yyval.n)=create_tree((yyvsp[-2].n),(yyvsp[-1].n),NULL,NULL);
                                             }
-#line 1605 "y.tab.c"
+#line 1610 "y.tab.c"
     break;
 
   case 28: /* stmt: PRINT expr ';'  */
-#line 157 "splparser.y"
+#line 162 "splparser.y"
                                             {
                                                 (yyval.n)=create_tree((yyvsp[-2].n),(yyvsp[-1].n),NULL,NULL);
                                             }
-#line 1613 "y.tab.c"
+#line 1618 "y.tab.c"
     break;
 
   case 29: /* stmt: BACKUP ';'  */
-#line 160 "splparser.y"
+#line 165 "splparser.y"
                                 {
                                                 (yyval.n) = create_tree((yyvsp[-1].n), NULL, NULL, NULL);
                                             }
-#line 1621 "y.tab.c"
+#line 1626 "y.tab.c"
     break;
 
   case 30: /* stmt: RESTORE ';'  */
-#line 163 "splparser.y"
+#line 168 "splparser.y"
                                 {
                                                 (yyval.n) = create_tree((yyvsp[-1].n), NULL, NULL, NULL);
                                             }
-#line 1629 "y.tab.c"
+#line 1634 "y.tab.c"
     break;
 
   case 31: /* stmt: ENCRYPT ids ';'  */
-#line 166 "splparser.y"
+#line 171 "splparser.y"
                                             {    
                                                 if(node_getType((yyvsp[-1].n))!=NODE_REG||!isAllowedRegister((yyvsp[-1].n)->value))
                                                 {
@@ -1638,11 +1643,11 @@ yyreduce:
                                                 }                            
                                                 (yyval.n)=create_tree((yyvsp[-2].n),(yyvsp[-1].n),NULL,NULL);
                                             }
-#line 1642 "y.tab.c"
+#line 1647 "y.tab.c"
     break;
 
   case 32: /* stmt: GOTO ID ';'  */
-#line 174 "splparser.y"
+#line 179 "splparser.y"
                                             {
                                                 if(lookup_constant(node_getName((yyvsp[-1].n)))!=NULL)/*if the address to jump to is a predefined value in constants file*/
                                                 {
@@ -1654,11 +1659,11 @@ yyreduce:
                                                 }
                                                 (yyval.n)->value=linecount;/*Hack to show line numbers in case of syntax errors*/
                                             }
-#line 1658 "y.tab.c"
+#line 1663 "y.tab.c"
     break;
 
   case 33: /* stmt: CALL ID ';'  */
-#line 185 "splparser.y"
+#line 190 "splparser.y"
                                             {
                                                 if(lookup_constant(node_getName((yyvsp[-1].n)))!=NULL)/*if the address to jump to is a predefined value in constants file*/
                                                 {
@@ -1670,153 +1675,153 @@ yyreduce:
                                                 }
                                                 (yyval.n)->value=linecount;/*Hack to show line numbers in case of syntax errors*/
                                             }
-#line 1674 "y.tab.c"
+#line 1679 "y.tab.c"
     break;
 
   case 34: /* stmt: ID ':'  */
-#line 196 "splparser.y"
+#line 201 "splparser.y"
                                             {
                                                 label_add(node_getName((yyvsp[-1].n)));
                                                 (yyval.n)=create_nontermNode(NODE_LABEL_DEF,(yyvsp[-1].n),NULL);
                                             }
-#line 1683 "y.tab.c"
+#line 1688 "y.tab.c"
     break;
 
   case 35: /* expr: expr ARITHOP1 expr  */
-#line 203 "splparser.y"
+#line 208 "splparser.y"
                                             {
                                                 (yyval.n)=create_tree((yyvsp[-1].n),(yyvsp[-2].n),(yyvsp[0].n),NULL);
                                             }
-#line 1691 "y.tab.c"
+#line 1696 "y.tab.c"
     break;
 
   case 36: /* expr: expr ARITHOP2 expr  */
-#line 206 "splparser.y"
+#line 211 "splparser.y"
                                             {
                                                 (yyval.n)=create_tree((yyvsp[-1].n),(yyvsp[-2].n),(yyvsp[0].n),NULL);
                                             }
-#line 1699 "y.tab.c"
+#line 1704 "y.tab.c"
     break;
 
   case 37: /* expr: expr RELOP expr  */
-#line 209 "splparser.y"
+#line 214 "splparser.y"
                                             {
                                                 (yyval.n)=create_tree((yyvsp[-1].n),(yyvsp[-2].n),(yyvsp[0].n),NULL);
                                             }
-#line 1707 "y.tab.c"
+#line 1712 "y.tab.c"
     break;
 
   case 38: /* expr: expr LOGOP expr  */
-#line 212 "splparser.y"
+#line 217 "splparser.y"
                                             {
                                                 (yyval.n)=create_tree((yyvsp[-1].n),(yyvsp[-2].n),(yyvsp[0].n),NULL);
                                             }
-#line 1715 "y.tab.c"
+#line 1720 "y.tab.c"
     break;
 
   case 39: /* expr: ARITHOP1 NUM  */
-#line 215 "splparser.y"
+#line 220 "splparser.y"
                                             {
                                                 if(node_getType((yyvsp[-1].n))==NODE_SUB)
                                                     (yyvsp[0].n)->value=(yyvsp[0].n)->value*-1;
                                                 (yyval.n)=(yyvsp[0].n);
                                             }
-#line 1725 "y.tab.c"
+#line 1730 "y.tab.c"
     break;
 
   case 40: /* expr: NOTOP expr  */
-#line 220 "splparser.y"
+#line 225 "splparser.y"
                                             {
                                                 (yyval.n)=create_tree((yyvsp[-1].n),(yyvsp[0].n),NULL,NULL);
                                             }
-#line 1733 "y.tab.c"
+#line 1738 "y.tab.c"
     break;
 
   case 41: /* expr: '[' expr ']'  */
-#line 223 "splparser.y"
+#line 228 "splparser.y"
                                             {
                                                 (yyval.n)=create_nontermNode(NODE_ADDR_EXPR,(yyvsp[-1].n),NULL);
                                             }
-#line 1741 "y.tab.c"
+#line 1746 "y.tab.c"
     break;
 
   case 42: /* expr: '(' expr ')'  */
-#line 226 "splparser.y"
+#line 231 "splparser.y"
                                             {
                                                 (yyval.n)=(yyvsp[-1].n);
                                             }
-#line 1749 "y.tab.c"
+#line 1754 "y.tab.c"
     break;
 
   case 43: /* expr: NUM  */
-#line 229 "splparser.y"
+#line 234 "splparser.y"
                                             {    
                                                 (yyval.n)=(yyvsp[0].n);
                                             }
-#line 1757 "y.tab.c"
+#line 1762 "y.tab.c"
     break;
 
   case 44: /* expr: ids  */
-#line 232 "splparser.y"
+#line 237 "splparser.y"
                                             {
                                                 (yyval.n)=(yyvsp[0].n);
                                             }
-#line 1765 "y.tab.c"
+#line 1770 "y.tab.c"
     break;
 
   case 45: /* expr: STRING  */
-#line 235 "splparser.y"
+#line 240 "splparser.y"
                                             {
                                                 (yyval.n)=(yyvsp[0].n);
                                             }
-#line 1773 "y.tab.c"
+#line 1778 "y.tab.c"
     break;
 
   case 46: /* ifpad: IF  */
-#line 240 "splparser.y"
+#line 245 "splparser.y"
                                             {
                                                 depth++;
                                                 (yyval.n)=(yyvsp[0].n);
                                             }
-#line 1782 "y.tab.c"
+#line 1787 "y.tab.c"
     break;
 
   case 47: /* elsepad: ELSE  */
-#line 245 "splparser.y"
+#line 250 "splparser.y"
                                             {
                                                 pop_alias();
                                             }
-#line 1790 "y.tab.c"
+#line 1795 "y.tab.c"
     break;
 
   case 48: /* whilepad: WHILE  */
-#line 250 "splparser.y"
+#line 255 "splparser.y"
                                             {
                                                 depth++;
                                                 flag_break++;
                                                 (yyval.n)=(yyvsp[0].n);
                                             }
-#line 1800 "y.tab.c"
+#line 1805 "y.tab.c"
     break;
 
   case 49: /* ids: ID  */
-#line 257 "splparser.y"
+#line 262 "splparser.y"
                                             {                            
                                                 (yyval.n)=substitute_id((yyvsp[0].n));
                                             }
-#line 1808 "y.tab.c"
+#line 1813 "y.tab.c"
     break;
 
   case 50: /* ids: REG  */
-#line 260 "splparser.y"
+#line 265 "splparser.y"
                                             {
                                                 (yyval.n)=(yyvsp[0].n);
                                             }
-#line 1816 "y.tab.c"
+#line 1821 "y.tab.c"
     break;
 
 
-#line 1820 "y.tab.c"
+#line 1825 "y.tab.c"
 
       default: break;
     }
@@ -2009,7 +2014,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 264 "splparser.y"
+#line 269 "splparser.y"
 
 
 int yyerror (char *msg) 

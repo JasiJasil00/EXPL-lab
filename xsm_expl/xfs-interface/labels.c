@@ -1,5 +1,10 @@
 #include "labels.h"
 
+//declarations for macos
+int remove_newline_character();
+int isalpha();
+int time();
+
 static
 label *_root;
 

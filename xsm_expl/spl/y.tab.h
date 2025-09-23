@@ -145,7 +145,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 10 "splparser.y"
+#line 15 "splparser.y"
 
     struct tree *n;
 

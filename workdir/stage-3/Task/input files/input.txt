@@ -1,0 +1,7 @@
+begin
+while (a!=0) do
+    read(a);
+    write(a);
+endwhile;
+
+end;

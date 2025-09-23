@@ -10,6 +10,12 @@ int out_linecount=0; //no of lines of code generated
 int flag_break=0;
 int regcount=0;
 
+
+//declarations for macos gcc
+int label_free();
+int file_expandPath();
+int file_getOpFileName();
+int yyparse();
 FILE *fp;
 
                         ///start constants and aliasing
