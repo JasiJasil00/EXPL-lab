@@ -17,6 +17,10 @@
 "while"     { return WHILE;}
 "do"        { return DO;}
 "endwhile"  { return ENDWHILE;}
+"continue"  {return CONTINUE;}
+"break"     {return BREAK;}
+"repeat"    {return REPEAT;}
+"until"     {return UNTIL;}
 "<"         {return LE;}
 "<="        {return LEEQ;}
 ">="        {return GTEQ;}

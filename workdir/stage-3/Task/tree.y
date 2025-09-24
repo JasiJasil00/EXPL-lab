@@ -17,8 +17,8 @@
 %token READ WRITE
 %token PLUS MINUS MUL DIV LE LEEQ GT GTEQ EQ NEQ
 %token ASSIGN 
-%token BEGINP ENDP ENDWHILE DO ENDIF IF WHILE THEN ELSE
-%type <no> expr InputStmt OutputStmt AsgStmt Stmt StmtList Program Ifstmt Whilestmt
+%token BEGINP ENDP ENDWHILE DO ENDIF IF WHILE THEN ELSE BREAK CONTINUE REPEAT UNTIL
+%type <no> expr InputStmt OutputStmt AsgStmt Stmt StmtList Program Ifstmt Whilestmt RepeatStmt DoWhileStmt
 
 %left PLUS MINUS
 %left MUL DIV
@@ -36,8 +36,12 @@ StmtList: Stmt
 Stmt    : InputStmt         {$$=$1;}
         | Ifstmt            {$$=$1;}
         | Whilestmt         {$$=$1;}
+        | RepeatStmt        { $$=$1; }
+        | DoWhileStmt       { $$=$1; }
         | OutputStmt        {$$=$1;}
         | AsgStmt           {$$=$1;}
+        | BREAK ';'         {$$=createTree(0,intType,NULL,NODE_BREAK,NULL,NULL);}
+        | CONTINUE ';'      {$$=createTree(0,intType,NULL,NODE_CONTINUE,NULL,NULL);}
         ;
 
 Ifstmt
@@ -67,7 +71,23 @@ Whilestmt
             $$ = createTree(0,boolType,NULL,NODE_WHILE,$3,$6); }
     ;
 
+RepeatStmt : REPEAT StmtList UNTIL '(' expr ')' ';'
+            {   if( $5->type != boolType){
+                yyerror("node type match error in repeat-until condition");
+                exit(0);
+                }
+                $$ = createTree(0, boolType, NULL, NODE_REPEATUNTIL, $5, $2);
+            }
+            ;
 
+DoWhileStmt
+    : DO StmtList WHILE '(' expr ')' ';'
+      { if($5->type != boolType){
+            yyerror("node type match error in do-while condition");
+            exit(0);
+        }
+        $$ = createTree(0, boolType, NULL, NODE_DOWHILE, $5, $2); }
+    ;
 
 InputStmt : READ '(' ID ')' ';'
           { $$ = createTree(0,intType,NULL,NODE_READ,$3,NULL); }

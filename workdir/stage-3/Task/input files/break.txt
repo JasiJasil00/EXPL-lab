@@ -1,0 +1,8 @@
+begin
+while (a!=0) do
+    read(a);
+    if(a==1) then break; endif;
+    write(a);
+endwhile;
+
+end;

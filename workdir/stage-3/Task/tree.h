@@ -23,6 +23,12 @@
 #define NODE_MOREOREQUAL  1015
 #define NODE_IF           1016
 #define NODE_WHILE        1017
+#define NODE_BREAK        1018
+#define NODE_CONTINUE     1019
+#define NODE_REPEATUNTIL  1020
+#define NODE_DOWHILE      1021
+
+#define MAX_LOOP_DEPTH 100
 
 struct tnode {
     int val;
