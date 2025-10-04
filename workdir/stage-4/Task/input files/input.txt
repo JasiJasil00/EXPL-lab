@@ -1,0 +1,9 @@
+begin
+decl
+int num;
+str sum;
+enddecl
+sum = "jasil"; 
+write("jasil");
+write(sum);
+end;
