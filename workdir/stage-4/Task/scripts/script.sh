@@ -12,6 +12,9 @@ fi
 INPUT_FILE="input files/$1"
 
 if [[ ! -f "$INPUT_FILE" ]]; then
+    cd "./input files"
+    echo "file names"
+    ls
     echo "Error: Input file '$INPUT_FILE' does not exist!"
     exit 1
 fi
