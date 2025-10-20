@@ -7,7 +7,10 @@
 #define noType 100
 // Extra nodetype for tree building, not a yacc token
   // choose a large value so it won’t clash
-#define NODE_CONNECTOR    999
+#define NODE_CONNECTOR    996
+#define NODE_2D_ARRAY     997
+#define NODE_ARRAY        998
+#define NODE_VAR          999
 #define NODE_STRING       1000
 #define NODE_NUM          1001
 #define NODE_ID           1002
@@ -42,6 +45,6 @@ struct tnode {
     struct tnode *left,*right;
 };
 
-struct tnode* createTree(int val, int type, char* c, int nodetype, struct tnode *l, struct tnode *r);
+struct tnode* createTree(int val, int type, char* c, int nodetype,struct Gsymbol * tGentry,struct tnode *l, struct tnode *r);
 void typevalidate(struct tnode * t);
 #endif

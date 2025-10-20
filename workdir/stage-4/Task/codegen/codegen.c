@@ -7,6 +7,9 @@
 int looptop = -1;
 int reg = 0;
 int label = 0;
+struct stack * head=NULL;
+int error;
+int end;
 void pushstack(int breaklabel, int continuelabel)
 {
     looptop++;
@@ -75,7 +78,7 @@ int codeGen(struct tnode *t, FILE *target_file)
         fprintf(target_file,"MOV R%d , %s\n", i , t->varname);
         return i;
         break;
-    case NODE_ID:
+    case NODE_VAR:
         i = getreg();
         if (t->varname == NULL)
         {
@@ -88,6 +91,24 @@ int codeGen(struct tnode *t, FILE *target_file)
         }
         fprintf(target_file, "MOV R%d, [%d]\n", i, t->Gentry->binding);
         return i;
+        break;
+    case NODE_ARRAY:
+         i = getreg();
+        int indexReg = codeGen(t->right, target_file); // evaluate index
+    if (!t->Gentry) {
+        fprintf(stderr, "Error: array Gentry is NULL\n");
+        exit(1);
+    }
+    p = getreg();
+    fprintf(target_file, "ADD R%d, %d\n", indexReg, t->Gentry->binding); // base + index
+     fprintf(target_file,"MOV R%d, %d\n",p, t->Gentry->binding);
+        fprintf(target_file,"ADD R%d, %d\n",p,t->Gentry->size);
+        fprintf(target_file,"GT R%d, R%d\n",p,indexReg);
+        fprintf(target_file,"JZ R%d, L%d\n",p,error);
+    fprintf(target_file, "MOV R%d, [R%d]\n", i, indexReg);
+    freereg();
+    freereg();
+    return i;
         break;
     case NODE_PLUS:
         return operator(target_file,t,"ADD");
@@ -104,7 +125,20 @@ int codeGen(struct tnode *t, FILE *target_file)
     case NODE_READ:
         i = getreg();
         j = getreg();
-        fprintf(target_file, "MOV R%d,%d\n", j,t->left->Gentry->binding);
+    if(t->left->nodetype != NODE_ARRAY) {
+        fprintf(target_file, "MOV R%d, %d\n", j, t->left->Gentry->binding);
+    } else {
+        int indexReg = codeGen(t->left->right, target_file);
+        p = getreg();
+        fprintf(target_file, "ADD R%d, %d\n", indexReg, t->left->Gentry->binding);
+        fprintf(target_file,"MOV R%d, %d\n",p, t->left->Gentry->binding);
+        fprintf(target_file,"ADD R%d, %d\n",p,t->left->Gentry->size);
+        fprintf(target_file,"GT R%d, R%d\n",p,indexReg);
+        fprintf(target_file,"JZ R%d, L%d\n",p,error);
+        fprintf(target_file, "MOV R%d, R%d\n", j, indexReg);
+        freereg();
+        freereg();
+    }
         fprintf(target_file, "MOV R%d, \"Read\"\n", i);
         fprintf(target_file, "PUSH R%d\n", i);
         fprintf(target_file, "MOV R%d, -1\n", i);
@@ -143,10 +177,30 @@ int codeGen(struct tnode *t, FILE *target_file)
         return -1;
         break;
     case NODE_ASSIGN:
-        i = codeGen(t->right, target_file);
-        fprintf(target_file, "MOV [%d], R%d\n",t->left->Gentry->binding, i);
+    i = codeGen(t->right, target_file);
+    if(t->left->nodetype != NODE_ARRAY) {
+        if(!t->left->Gentry){
+            fprintf(stderr, "Error: Left variable Gentry is NULL\n");
+            exit(1);
+        }
+        fprintf(target_file, "MOV [%d], R%d\n", t->left->Gentry->binding, i);
+    } else {
+        int indexReg = codeGen(t->left->right, target_file);
+        if(!t->left->Gentry){
+            fprintf(stderr, "Error: Array Gentry is NULL\n");
+            exit(1);
+        }
+        fprintf(target_file, "ADD R%d, %d\n", indexReg, t->left->Gentry->binding);
+         fprintf(target_file,"MOV R%d, %d\n",p, t->left->Gentry->binding);
+        fprintf(target_file,"ADD R%d, %d\n",p,t->left->Gentry->size);
+        fprintf(target_file,"GT R%d, R%d\n",p,indexReg);
+        fprintf(target_file,"JZ R%d, L%d\n",p,error);
+        fprintf(target_file, "MOV [R%d], R%d\n", indexReg, i);
         freereg();
-        break;
+    }
+    freereg();
+    break;
+
     case NODE_CONNECTOR:
         codeGen(t->left, target_file);
         codeGen(t->right, target_file);
@@ -260,6 +314,8 @@ void execute(struct tnode *t)
         perror("fopen");
         return;
     }
+    error = getlabel();
+    end   = getlabel();
     fprintf(target_file, "%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
             0,
             2056,
@@ -275,7 +331,23 @@ void execute(struct tnode *t)
     }
     fprintf(target_file, "MOV SP, %d\n",addresssymbol);
     int result = codeGen(t, target_file); // task2
-   
+    fprintf(target_file,"JMP L%d\n",end);
+    fprintf(target_file,"L%d:\n",error);
+    fprintf(target_file,"MOV R2, \"out of bound\"\n");
+     fprintf(target_file, "MOV R5, \"Write\"\n");
+    fprintf(target_file, "PUSH R5\n");
+     fprintf(target_file, "MOV R1, -2\n");
+    fprintf(target_file, "PUSH R1\n");
+    fprintf(target_file, "PUSH R2 \n");
+    fprintf(target_file, "PUSH R2\n");
+    fprintf(target_file, "PUSH R2\n");
+    fprintf(target_file, "CALL 0\n");
+    fprintf(target_file, "POP R1\n");
+    fprintf(target_file, "POP R1\n");
+    fprintf(target_file, "POP R1\n");
+    fprintf(target_file, "POP R1\n");
+    fprintf(target_file, "POP R1\n");
+    fprintf(target_file,"L%d:\n",end);
     fprintf(target_file, "MOV R5, \"Exit\"\n");
     fprintf(target_file, "PUSH R5\n");
     fprintf(target_file, "PUSH R1\n");

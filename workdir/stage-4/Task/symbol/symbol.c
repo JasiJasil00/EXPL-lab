@@ -8,10 +8,11 @@ struct Gsymbol *Lookup(char * name){
     }
     return temp;
 }            
-void Install(char *name, int type, int size) {
+void Install(char *name, int type, int size , int sizecol, int array) {
     // Check if the variable is already declared
     if (Lookup(name) != NULL) {
         printf("Error: %s already declared\n", name);
+        exit(1);
         return;
     }
 
@@ -20,9 +21,11 @@ void Install(char *name, int type, int size) {
     newnode->name = strdup(name);
     newnode->type = type;
     newnode->size = size;
-    newnode->binding = addresssymbol;  // You can assign memory locations later
+    newnode->sizecol = sizecol;
+    newnode->binding = addresssymbol; 
+    newnode->array=array; // You can assign memory locations later
     newnode->next = NULL;
-    addresssymbol++;
+    addresssymbol+=size;
     // Insert at the end of the list
     if (symbol == NULL) {
         symbol = newnode;

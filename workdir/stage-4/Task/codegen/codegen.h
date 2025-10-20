@@ -5,7 +5,7 @@ struct stack{
     int cont;
     struct stack *next ;
 };
-struct stack * head;
+
 int codeGen(struct tnode *t,FILE *target_file);
 void execute(struct tnode * t);
 void pushstack(int breaklabel, int continuelabel);

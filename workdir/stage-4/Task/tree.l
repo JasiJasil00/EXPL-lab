@@ -11,7 +11,6 @@ num {digit}+
 letter [a-zA-Z]
 id {letter}({letter}|{digit})*
 string   ["][^"]*["]
-
 %%
 
 "begin"     { return BEGINP; }
@@ -40,20 +39,22 @@ string   ["][^"]*["]
 "!="        {return NEQ;}
 "=="        {return EQ;}
 {string}    {   char *c = strdup(yytext);
-                yylval.no = createTree(0, strType, c, NODE_STRING, NULL, NULL);
+                yylval.no = createTree(0, strType, c, NODE_STRING, NULL,NULL, NULL);
                 return STRING;
             }
 {num}      { number = atoi(yytext);
-              yylval.no = createTree(number, intType, NULL, NODE_NUM, NULL, NULL);
+              yylval.no = createTree(number, intType, NULL, NODE_NUM, NULL,NULL, NULL);
               return NUM; }
 {id}       { char *c = strdup(yytext);
-              yylval.no = createTree(0, noType, c, NODE_ID, NULL, NULL);
+              yylval.no = createTree(0, noType, c, NODE_ID, Lookup(c), NULL, NULL);
               return ID; }
 "="         { return ASSIGN; }
 ";"         { return ';' ; }
 ","         {return ',';}
 "("         { return '('; }
 ")"         { return ')'; }
+"["         { return '[';}
+"]"         { return ']';}
 "+"         { return PLUS; }
 "-"         { return MINUS; }
 "*"         { return MUL; }

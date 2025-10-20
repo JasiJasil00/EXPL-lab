@@ -8,6 +8,7 @@
     #include "symbol/symbol.c"
     #include "codegen/codegen.h"
     #include "codegen/codegen.c"
+    int currentType;
     int yylex(void);
 %}
 
@@ -22,8 +23,8 @@
 %token ASSIGN 
 %token DECL ENDDECL INT STR
 %token BEGINP ENDP ENDWHILE DO ENDIF IF WHILE THEN ELSE BREAK CONTINUE REPEAT UNTIL
-%type <no> expr InputStmt OutputStmt AsgStmt Stmt StmtList Program Ifstmt Whilestmt RepeatStmt DoWhileStmt valtypes
-%type <type> VarList Type
+%type <no> expr InputStmt OutputStmt AsgStmt Stmt StmtList Program Ifstmt Whilestmt RepeatStmt DoWhileStmt valtype readtype assigntype
+%type <type> VarList Type decltype
 %left PLUS MINUS
 %left MUL DIV
 %nonassoc LE LEEQ GT GTEQ EQ NEQ
@@ -41,21 +42,22 @@ Declarations : DECL DeclList ENDDECL  {printsymboltable();}
 DeclList : DeclList Decl  {}
             | Decl       {}
             ;
-Decl : Type VarList ';'  {}
+Decl : Type VarList ';'  { $2=$1; }
         ;
 
-Type : INT     { $$= intType;}
-    | STR      { $$= strType;}
+Type : INT     { currentType = intType; $$= intType;}
+    | STR      { currentType = strType; $$= strType;}
     ;
 
-VarList : VarList ',' ID  
-                            { Install($3->varname, $1, 1); $$ = $1; }
-        | ID
-                { Install($1->varname, $<type>0, 1); $$ = $<type>0;  }
+VarList : VarList ',' decltype
+        | decltype
         ;
-
+ 
+decltype :   ID '[' NUM ']'  {Install($1->varname,currentType,$3->val,0,NODE_ARRAY);}
+        |   ID              {Install($1->varname,currentType,1,0,NODE_VAR);}
+        ;
 StmtList: Stmt
-        | StmtList Stmt           { $$ = createTree(0,noType,NULL,NODE_CONNECTOR,$1,$2); }
+        | StmtList Stmt           { $$ = createTree(0,noType,NULL,NODE_CONNECTOR,NULL,$1,$2); }
         ;
 
 Stmt    : InputStmt         {$$=$1;}
@@ -65,83 +67,95 @@ Stmt    : InputStmt         {$$=$1;}
         | DoWhileStmt       { $$=$1; }
         | OutputStmt        {$$=$1;}
         | AsgStmt           {$$=$1;}
-        | BREAK ';'         {$$=createTree(0,noType,NULL,NODE_BREAK,NULL,NULL);}
-        | CONTINUE ';'      {$$=createTree(0,noType,NULL,NODE_CONTINUE,NULL,NULL);}
+        | BREAK ';'         {$$=createTree(0,noType,NULL,NODE_BREAK,NULL,NULL,NULL);}
+        | CONTINUE ';'      {$$=createTree(0,noType,NULL,NODE_CONTINUE,NULL,NULL,NULL);}
         ;
 
 Ifstmt
     : IF '(' expr ')' THEN StmtList ELSE StmtList ENDIF ';'
-                                                            { struct tnode *connect = createTree(0,intType,NULL,NODE_CONNECTOR,$6,$8);
-                                                            $$ = createTree(0,boolType,NULL,NODE_IF,$3,connect); }
+                                                            { struct tnode *connect = createTree(0,intType,NULL,NODE_CONNECTOR,NULL,$6,$8);
+                                                            $$ = createTree(0,boolType,NULL,NODE_IF,NULL,$3,connect); }
     | IF '(' expr ')' THEN StmtList ENDIF ';'
                                             {   
-                                                struct tnode *connect = createTree(0,intType,NULL,NODE_CONNECTOR,$6,NULL);
-                                                $$ = createTree(0,boolType,NULL,NODE_IF,$3,connect); 
+                                                struct tnode *connect = createTree(0,intType,NULL,NODE_CONNECTOR,NULL,$6,NULL);
+                                                $$ = createTree(0,boolType,NULL,NODE_IF,NULL,$3,connect); 
                                             }
     ;
 
 Whilestmt
     : WHILE '(' expr ')' DO StmtList ENDWHILE ';'
                                                     {  
-                                                        $$ = createTree(0,boolType,NULL,NODE_WHILE,$3,$6);
+                                                        $$ = createTree(0,boolType,NULL,NODE_WHILE,NULL,$3,$6);
                                                      }
     ;
 
 RepeatStmt : REPEAT StmtList UNTIL '(' expr ')' ';'
                                                         {   
-                                                            $$ = createTree(0, boolType, NULL, NODE_REPEATUNTIL, $5, $2);
+                                                            $$ = createTree(0, boolType, NULL, NODE_REPEATUNTIL, NULL, $5, $2);
                                                         }
             ;
 
 DoWhileStmt
     : DO StmtList WHILE '(' expr ')' ';'
                                         { 
-                                          $$ = createTree(0, boolType, NULL, NODE_DOWHILE, $5, $2); 
+                                          $$ = createTree(0, boolType, NULL, NODE_DOWHILE, NULL, $5, $2); 
                                         }
     ;
 
-InputStmt : READ '(' ID ')' ';'
-                                { $3->Gentry=Lookup($3->varname); if(!$3->Gentry) yyerror("no entry in symbol table"); $3->type=$3->Gentry->type; 
-                                   $$ = createTree(0,$3->type,NULL,NODE_READ,$3,NULL); 
+InputStmt : READ '(' readtype ')' ';'
+                                { 
+                                   $$ = createTree(0,$3->type,NULL,NODE_READ,NULL,$3,NULL); 
                                 }
              ;
-OutputStmt: WRITE '(' valtypes ')' ';'  
+
+
+
+readtype : ID {$1->Gentry=Lookup($1->varname); if(!$1->Gentry) yyerror("no entry in symbol table");  $1->nodetype=NODE_VAR; $1->type=$1->Gentry->type; $$=$1; }
+          | ID '[' expr ']' {$1->Gentry=Lookup($1->varname); if(!$1->Gentry) yyerror("no entry in symbol table"); $1->type=$1->Gentry->type;  $$ = createTree(0,$1->type,$1->varname,NODE_ARRAY,$1->Gentry,$1,$3);}
+         ;
+
+OutputStmt: WRITE '(' valtype ')' ';'  
                                         { 
-                                            $$ = createTree(0,$3->type,NULL,NODE_WRITE,$3,NULL); }
+                                            $$ = createTree(0,$3->type,NULL,NODE_WRITE,NULL,$3,NULL); }
           ;
 
-AsgStmt : ID ASSIGN valtypes ';'
-        {   $1->Gentry=Lookup($1->varname); if(!$1->Gentry) yyerror("no entry in symbol table"); $1->type=$1->Gentry->type;
-            $$ = createTree(0,$1->type,NULL,NODE_ASSIGN,$1,$3); }
+AsgStmt : assigntype ASSIGN valtype ';'
+        { 
+            $$ = createTree(0,$1->type,NULL,NODE_ASSIGN,NULL,$1,$3); }
         ;
 
-valtypes :  expr {$$=$1;}
+assigntype : ID {$1->Gentry=Lookup($1->varname); if(!$1->Gentry) yyerror("no entry in symbol table"); $1->type=$1->Gentry->type;  $1->nodetype=NODE_VAR; $$ = $1;}
+           | ID '[' expr ']' {$1->Gentry=Lookup($1->varname); if(!$1->Gentry) yyerror("no entry in symbol table"); $1->type=$1->Gentry->type;  $$ = createTree(0,$1->type,NULL,NODE_ARRAY,$1->Gentry,$1,$3);}
+           ;
+
+valtype :  expr {$$=$1;}
          |  STRING {$$=$1;}
          ;
 
 expr
     : expr PLUS expr      { 
-                                 $$ = createTree(0,intType,NULL,NODE_PLUS,$1,$3); }
+                                 $$ = createTree(0,intType,NULL,NODE_PLUS,NULL,$1,$3); }
     | expr MINUS expr     { 
-                                $$ = createTree(0,intType,NULL,NODE_MINUS,$1,$3); }
+                                $$ = createTree(0,intType,NULL,NODE_MINUS,NULL,$1,$3); }
     | expr MUL expr       { 
-                                $$ = createTree(0,intType,NULL,NODE_MUL,$1,$3); }
+                                $$ = createTree(0,intType,NULL,NODE_MUL,NULL,$1,$3); }
     | expr DIV expr       { 
-                                $$ = createTree(0,intType,NULL,NODE_DIV,$1,$3); }
+                                $$ = createTree(0,intType,NULL,NODE_DIV,NULL,$1,$3); }
     | expr LE expr        { 
-                                $$ = createTree(0,boolType,NULL,NODE_LESS,$1,$3); }
+                                $$ = createTree(0,boolType,NULL,NODE_LESS,NULL,$1,$3); }
     | expr LEEQ expr      { 
-                                $$ = createTree(0,boolType,NULL,NODE_LESSOREQUAL,$1,$3); }
+                                $$ = createTree(0,boolType,NULL,NODE_LESSOREQUAL,NULL,$1,$3); }
     | expr GT expr        { 
-                                $$ = createTree(0,boolType,NULL,NODE_MORE,$1,$3); }
+                                $$ = createTree(0,boolType,NULL,NODE_MORE,NULL,$1,$3); }
     | expr GTEQ expr      { 
-                                $$ = createTree(0,boolType,NULL,NODE_MOREOREQUAL,$1,$3); }
+                                $$ = createTree(0,boolType,NULL,NODE_MOREOREQUAL,NULL,$1,$3); }
     | expr EQ expr        {
-                                $$ = createTree(0,boolType,NULL,NODE_EQUAL,$1,$3); }
+                                $$ = createTree(0,boolType,NULL,NODE_EQUAL,NULL,$1,$3); }
     | expr NEQ expr       { 
-                                $$ = createTree(0,boolType,NULL,NODE_NOTEQUAL,$1,$3); }
+                                $$ = createTree(0,boolType,NULL,NODE_NOTEQUAL,NULL,$1,$3); }
+    | ID '[' expr ']'      { $1->Gentry=Lookup($1->varname); if(!$1->Gentry) yyerror("no entry in symbol table"); $1->type=$1->Gentry->type;   $$ = createTree(0,$1->type,NULL,NODE_ARRAY,$1->Gentry,$1,$3); }
     | NUM                 { $$ = $1; }
-    | ID                  {  $1->Gentry=Lookup($1->varname); if(!$1->Gentry) yyerror("no entry in symbol table"); $1->type=$1->Gentry->type;  $$ = $1; }
+    | ID                  {  $1->Gentry=Lookup($1->varname); if(!$1->Gentry) yyerror("no entry in symbol table"); $1->type=$1->Gentry->type;  $1->nodetype=NODE_VAR; $$ = $1; }
     | '(' expr ')'        { $$ = $2; }
     ;
 

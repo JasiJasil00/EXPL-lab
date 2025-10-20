@@ -2,15 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tree.h"
+#include  "../symbol/symbol.h"
 
-struct tnode* createTree(int val, int type, char* c, int nodetype, struct tnode *l, struct tnode *r) {
+struct tnode* createTree(int val, int type, char* c, int nodetype,struct Gsymbol * tGentry ,struct tnode *l, struct tnode *r) {
     struct tnode *temp = (struct tnode*)malloc(sizeof(struct tnode));
     temp->val = val;
     temp->type = type;
     temp->nodetype = nodetype;
     temp->left = l;
     temp->right = r;
-    temp->Gentry = NULL;
+    temp->Gentry = tGentry;
     if (c != NULL) {
         temp->varname = (char*)malloc(strlen(c) + 1);
         strcpy(temp->varname, c);
@@ -43,6 +44,7 @@ void typevalidate(struct tnode *t){
                 yyerror("node type match error in do-while condition");
             
             }
+            break;
         case NODE_ASSIGN:
             if(t->left->type != t->right->type){
                 yyerror("node type match error assignment");
@@ -98,6 +100,12 @@ void typevalidate(struct tnode *t){
              if(t->left->type!=intType || t->right->type!=intType){
                      yyerror("node type match error logic");
             }    
+            break;
+        case NODE_VAR:
+            if(t->Gentry!=NULL && t->Gentry->array!=NODE_VAR){
+                if(t->Gentry!=NULL)printf("%s %d %d\n",t->varname, t->Gentry->size,t->Gentry->sizecol);
+                yyerror("ID type array");
+            }
             break;
     }
 }

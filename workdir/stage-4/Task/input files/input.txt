@@ -1,9 +1,15 @@
 begin
 decl
-int num;
-str sum;
+int num[2];
+int size;
+int sum;
 enddecl
-sum = "jasil"; 
-write("jasil");
-write(sum);
+size = 0;
+sum = 0;
+while (size<=2) do 
+    read(num[size]); 
+    sum = sum + num[size];
+    size = size+1; 
+endwhile;
+write(num[0]);
 end;

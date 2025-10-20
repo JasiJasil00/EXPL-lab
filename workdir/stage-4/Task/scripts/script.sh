@@ -12,7 +12,9 @@ fi
 INPUT_FILE="input files/$1"
 
 if [[ ! -f "$INPUT_FILE" ]]; then
-    cd "./input files"
+    cd "/mnt/d/nitc curriculum/sem5/compiler design lab/workdir/stage-4/Task/scripts"
+    ./clean.sh
+    cd "/mnt/d/nitc curriculum/sem5/compiler design lab/workdir/stage-4/Task//input files"
     echo "file names"
     ls
     echo "Error: Input file '$INPUT_FILE' does not exist!"
@@ -34,7 +36,7 @@ gcc lex.yy.c -o exe
 TARGET_FILE="target_file.xsm"
 
 if [[ ! -f "$TARGET_FILE" ]]; then
-    cd ./scripts
+    cd "/mnt/d/nitc curriculum/sem5/compiler design lab/workdir/stage-4/Task/scripts"
     ./clean.sh
     echo "Error: '$TARGET_FILE' was not generated!"
     exit 1
@@ -48,7 +50,7 @@ cd "/mnt/d/nitc curriculum/sem5/compiler design lab/xsm_expl" || exit 1
 TRANSLATED_FILE="../workdir/stage-4/Task/translatedFile.xsm"
 
 if [[ ! -f "$TRANSLATED_FILE" ]]; then
-    cd ./scripts
+    cd "/mnt/d/nitc curriculum/sem5/compiler design lab/workdir/stage-4/Task/scripts"
     ./clean.sh
     echo "Error: '$TRANSLATED_FILE' not found!"
     exit 1
