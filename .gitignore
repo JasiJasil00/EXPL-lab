@@ -1,7 +1,0 @@
-.vscode/
-**/lex.yy.c
-**/y.tab.c
-**/y.tab.h
-**/target_file.xsm
-**/translatedFile.xsm
-**/exe
