@@ -110,6 +110,28 @@ int codeGen(struct tnode *t, FILE *target_file)
     freereg();
     return i;
         break;
+    case NODE_2D_ARRAY:
+        int Reg1 = codeGen(t->left, target_file);
+        int Reg2 = codeGen(t->right, target_file);
+        p = getreg();
+        fprintf(target_file, "MOV R%d, %d\n",p,t->Gentry->size);
+        fprintf(target_file,"GT R%d, R%d\n",p,Reg1);
+        fprintf(target_file,"JZ R%d, L%d\n",p,error);
+        fprintf(target_file, "MOV R%d, %d\n",p,t->Gentry->sizecol);
+        fprintf(target_file,"GT R%d, R%d\n",p,Reg2);
+        fprintf(target_file,"JZ R%d, L%d\n",p,error);
+        fprintf(target_file, "MUL R%d, %d\n", Reg2, t->Gentry->size);
+        fprintf(target_file, "ADD R%d, R%d\n",Reg1, Reg2);
+        fprintf(target_file,"ADD R%d, %d\n",Reg1, t->Gentry->binding);
+        fprintf(target_file,"MOV R%d, %d\n",p, t->Gentry->binding);
+        fprintf(target_file,"ADD R%d, %d\n",p, t->Gentry->size*t->Gentry->sizecol);
+        fprintf(target_file,"GT R%d, R%d\n",p,Reg1);
+        fprintf(target_file,"JZ R%d, L%d\n",p,error);
+        fprintf(target_file, "MOV R%d, [R%d]\n",p, Reg1);
+        freereg();
+        freereg();
+        return p;
+        break;
     case NODE_PLUS:
         return operator(target_file,t,"ADD");
         break;
@@ -125,9 +147,9 @@ int codeGen(struct tnode *t, FILE *target_file)
     case NODE_READ:
         i = getreg();
         j = getreg();
-    if(t->left->nodetype != NODE_ARRAY) {
+    if(t->left->nodetype == NODE_VAR) {
         fprintf(target_file, "MOV R%d, %d\n", j, t->left->Gentry->binding);
-    } else {
+    } else if(t->left->nodetype == NODE_ARRAY){
         int indexReg = codeGen(t->left->right, target_file);
         p = getreg();
         fprintf(target_file, "ADD R%d, %d\n", indexReg, t->left->Gentry->binding);
@@ -136,6 +158,27 @@ int codeGen(struct tnode *t, FILE *target_file)
         fprintf(target_file,"GT R%d, R%d\n",p,indexReg);
         fprintf(target_file,"JZ R%d, L%d\n",p,error);
         fprintf(target_file, "MOV R%d, R%d\n", j, indexReg);
+        freereg();
+        freereg();
+    } else if(t->left->nodetype == NODE_2D_ARRAY) {
+        int Reg1 = codeGen(t->left->left, target_file);
+        int Reg2 = codeGen(t->left->right, target_file);
+        p = getreg();
+        fprintf(target_file, "MOV R%d, %d\n",p,t->left->Gentry->size);
+        fprintf(target_file,"GT R%d, R%d\n",p,Reg1);
+        fprintf(target_file,"JZ R%d, L%d\n",p,error);
+        fprintf(target_file, "MOV R%d, %d\n",p,t->left->Gentry->sizecol);
+        fprintf(target_file,"GT R%d, R%d\n",p,Reg2);
+        fprintf(target_file,"JZ R%d, L%d\n",p,error);
+        fprintf(target_file, "MUL R%d, %d\n", Reg2, t->left->Gentry->size);
+        fprintf(target_file, "ADD R%d, R%d\n",Reg1, Reg2);
+        fprintf(target_file,"ADD R%d, %d\n",Reg1, t->left->Gentry->binding);
+        fprintf(target_file,"MOV R%d, %d\n",p, t->left->Gentry->binding);
+        fprintf(target_file,"ADD R%d, %d\n",p, t->left->Gentry->size*t->left->Gentry->sizecol);
+        fprintf(target_file,"GT R%d, R%d\n",p,Reg1);
+        fprintf(target_file,"JZ R%d, L%d\n",p,error);
+        fprintf(target_file, "MOV R%d, R%d\n", j, Reg1);
+        freereg();
         freereg();
         freereg();
     }
@@ -178,25 +221,47 @@ int codeGen(struct tnode *t, FILE *target_file)
         break;
     case NODE_ASSIGN:
     i = codeGen(t->right, target_file);
-    if(t->left->nodetype != NODE_ARRAY) {
+    if(t->left->nodetype == NODE_VAR) {
         if(!t->left->Gentry){
             fprintf(stderr, "Error: Left variable Gentry is NULL\n");
             exit(1);
         }
         fprintf(target_file, "MOV [%d], R%d\n", t->left->Gentry->binding, i);
-    } else {
+    } else if(t->left->nodetype == NODE_ARRAY) {
         int indexReg = codeGen(t->left->right, target_file);
         if(!t->left->Gentry){
             fprintf(stderr, "Error: Array Gentry is NULL\n");
             exit(1);
         }
-        p=getreg();
+        p = getreg();
         fprintf(target_file, "ADD R%d, %d\n", indexReg, t->left->Gentry->binding);
-         fprintf(target_file,"MOV R%d, %d\n",p, t->left->Gentry->binding);
+        fprintf(target_file,"MOV R%d, %d\n",p, t->left->Gentry->binding);
         fprintf(target_file,"ADD R%d, %d\n",p,t->left->Gentry->size);
         fprintf(target_file,"GT R%d, R%d\n",p,indexReg);
         fprintf(target_file,"JZ R%d, L%d\n",p,error);
         fprintf(target_file, "MOV [R%d], R%d\n", indexReg, i);
+        freereg();
+        freereg();
+    }else if(t->left->nodetype == NODE_2D_ARRAY ){
+        int Reg1 = codeGen(t->left->left, target_file);
+        int Reg2 = codeGen(t->left->right, target_file);
+        p = getreg();
+        fprintf(target_file, "MOV R%d, %d\n",p,t->left->Gentry->size);
+        fprintf(target_file,"GT R%d, R%d\n",p,Reg1);
+        fprintf(target_file,"JZ R%d, L%d\n",p,error);
+        fprintf(target_file, "MOV R%d, %d\n",p,t->left->Gentry->sizecol);
+        fprintf(target_file,"GT R%d, R%d\n",p,Reg2);
+        fprintf(target_file,"JZ R%d, L%d\n",p,error);
+        fprintf(target_file, "MUL R%d, %d\n", Reg2, t->left->Gentry->size);
+        fprintf(target_file, "ADD R%d, R%d\n",Reg1, Reg2);
+        fprintf(target_file,"ADD R%d, %d\n",Reg1, t->left->Gentry->binding);
+        fprintf(target_file,"MOV R%d, %d\n",p, t->left->Gentry->binding);
+        fprintf(target_file,"ADD R%d, %d\n",p, t->left->Gentry->size*t->left->Gentry->sizecol);
+        fprintf(target_file,"GT R%d, R%d\n",p,Reg1);
+        fprintf(target_file,"JZ R%d, L%d\n",p,error);
+        fprintf(target_file, "MOV [R%d], R%d\n", Reg1, i);
+        freereg();
+        freereg();
         freereg();
     }
     freereg();
