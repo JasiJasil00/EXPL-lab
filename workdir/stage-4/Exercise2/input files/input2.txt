@@ -1,0 +1,6 @@
+begin
+decl
+int size;
+enddecl
+size=0;
+end;

@@ -1,0 +1,15 @@
+begin
+decl
+int sum;
+int size;
+int *p;
+enddecl
+p = & size;
+write(p);
+write(size);
+p = & sum;
+write(p);
+read(*p);
+write(*p);
+write(size);
+end;
